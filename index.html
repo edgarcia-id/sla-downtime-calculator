@@ -4,17 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SLA & Downtime Calculator | Ed Garcia (NusaIT)</title>
-    <link rel="icon" href="https://nusait.com/wp-content/uploads/2025/08/logo-nusait.com_-300x300.webp" sizes="192x192" />
+    <link rel="icon" href="assets/img/icon-nusait.webp" sizes="192x192" type="image/webp" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 12px; }
-        .header-brand { color: #0d6efd; font-weight: 700; }
-        .result-box { background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #0d6efd; }
-        .result-label { font-size: 0.85rem; color: #6c757d; text-transform: uppercase; letter-spacing: 1px; }
-        .result-value { font-size: 1.25rem; font-weight: 600; color: #212529; }
-        .consultant-note { font-size: 0.9rem; color: #6c757d; border-top: 1px solid #dee2e6; padding-top: 15px; margin-top: 20px; }
+        body { 
+            background-color: #f8f9fa; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        .card { 
+            border: none; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            border-radius: 12px; 
+        }
+        .header-brand { 
+            color: #0d6efd; 
+            font-weight: 700; 
+        }
+        .result-box { 
+            background: #eef2f7; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            border-left: 4px solid #0d6efd; 
+        }
+        .result-label { 
+            font-size: 0.85rem; 
+            color: #6c757d; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
+        .result-value { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            color: #212529; 
+        }
+        .consultant-note { 
+            font-size: 0.9rem; 
+            color: #6c757d; 
+            border-top: 1px solid #dee2e6; 
+            padding-top: 15px; 
+            margin-top: 20px; 
+        }
+        /* Agar PDF lebih rapi (mode print) */
+        @media print {
+            body {
+                background-color: #ffffff;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -23,22 +64,32 @@
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             
-            <div class="text-center mb-4">
+            <div class="text-center mb-4 no-print">
                 <h4 class="header-brand"><i class="fas fa-shield-alt"></i> NusaIT Tools</h4>
                 <p class="text-muted">IT Governance & Reliability Calculator</p>
             </div>
 
-            <div class="card p-4">
-                <h2 class="h4 mb-3 text-center">SLA Downtime Calculator</h2>
-                <p class="small text-muted text-center mb-4">Calculate the maximum allowed downtime for your Service Level Agreement (SLA).</p>
+            <!-- Mulai area yang akan di-export ke PDF -->
+            <div class="card p-4" id="reportArea">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h2 class="h4 mb-1">SLA Downtime Calculator</h2>
+                        <p class="small text-muted mb-0">Calculate the maximum allowed downtime for your Service Level Agreement (SLA).</p>
+                    </div>
+                    <!-- Tombol Download PDF -->
+                    <button id="downloadPdfBtn" class="btn btn-outline-dark btn-sm no-print">
+                        <i class="fas fa-file-pdf me-1"></i> Download PDF
+                    </button>
+                </div>
 
+                <!-- Input SLA tunggal -->
                 <div class="mb-4">
                     <label for="slaInput" class="form-label fw-bold">SLA Percentage (%)</label>
                     <div class="input-group input-group-lg">
                         <input type="number" class="form-control" id="slaInput" placeholder="e.g. 99.9" step="0.01" min="0" max="100" value="99.9">
                         <span class="input-group-text">%</span>
                     </div>
-                    <div class="mt-2 text-center">
+                    <div class="mt-2 text-center no-print">
                         <button class="btn btn-outline-secondary btn-sm me-1" onclick="setSLA(99)">99%</button>
                         <button class="btn btn-outline-secondary btn-sm me-1" onclick="setSLA(99.9)">99.9%</button>
                         <button class="btn btn-outline-secondary btn-sm me-1" onclick="setSLA(99.95)">99.95%</button>
@@ -46,6 +97,7 @@
                     </div>
                 </div>
 
+                <!-- Hasil untuk SLA tunggal -->
                 <div id="results">
                     <div class="result-box">
                         <div class="d-flex justify-content-between align-items-center">
@@ -88,20 +140,93 @@
                     </div>
                 </div>
 
-                <div class="consultant-note text-center">
+                <!-- ============================= -->
+                <!-- FITUR 1: PERBANDINGAN MULTI-SLA -->
+                <!-- ============================= -->
+                <hr class="my-4">
+
+                <h5 class="mb-1">SLA Comparison</h5>
+                <p class="small text-muted mb-3">
+                    Compare different SLA tiers and see the impact on yearly downtime.
+                </p>
+
+                <!-- Checkbox preset SLA -->
+                <div class="mb-3 no-print">
+                    <label class="form-label small text-muted mb-1">Select SLA tiers to compare:</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <!-- Akan diisi via JS juga, tapi kita buat manual agar terlihat rapi -->
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input sla-compare-checkbox" type="checkbox" value="99" id="slaCompare99" checked>
+                            <label class="form-check-label" for="slaCompare99">99%</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input sla-compare-checkbox" type="checkbox" value="99.5" id="slaCompare995">
+                            <label class="form-check-label" for="slaCompare995">99.5%</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input sla-compare-checkbox" type="checkbox" value="99.9" id="slaCompare999" checked>
+                            <label class="form-check-label" for="slaCompare999">99.9%</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input sla-compare-checkbox" type="checkbox" value="99.95" id="slaCompare9995" checked>
+                            <label class="form-check-label" for="slaCompare9995">99.95%</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input sla-compare-checkbox" type="checkbox" value="99.99" id="slaCompare9999" checked>
+                            <label class="form-check-label" for="slaCompare9999">99.99%</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input sla-compare-checkbox" type="checkbox" value="99.999" id="slaCompare99999">
+                            <label class="form-check-label" for="slaCompare99999">99.999%</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart perbandingan SLA -->
+                <div class="mb-3">
+                    <canvas id="slaChart" height="200"></canvas>
+                </div>
+
+                <!-- Tabel perbandingan SLA -->
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SLA (%)</th>
+                                <th>Yearly Downtime (formatted)</th>
+                                <th>Yearly Downtime (minutes)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody">
+                            <!-- Diisi via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ============================= -->
+                <!-- END FITUR 1 -->
+                <!-- ============================= -->
+
+                <div class="consultant-note text-center mt-3">
                     <p class="mb-2">Need help drafting a comprehensive SLA contract or IT Audit?</p>
                     <a href="https://nusait.com/about" target="_blank" class="btn btn-dark btn-sm rounded-pill px-4">
                         Consult with Ed Garcia
                     </a>
                 </div>
             </div>
+            <!-- Akhir area reportArea -->
 
             <div class="text-center mt-4 small text-muted">
-                &copy; <span id="year"></span> Nusa Industri Teknologi. <a href="https://github.com/edgarcia-id" class="text-decoration-none text-muted">Open Source on GitHub</a>.
+                &copy; <span id="year"></span> Nusa Industri Teknologi. 
+                <a href="https://github.com/edgarcia-id" class="text-decoration-none text-muted">Open Source on GitHub</a>.
             </div>
         </div>
     </div>
 </div>
+
+<!-- Library eksternal untuk fitur tambahan -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -123,15 +248,15 @@
         if (seconds === 0) return "0s";
         
         const d = Math.floor(seconds / (3600 * 24));
-        const h = Math.floor(seconds % (3600 * 24) / 3600);
-        const m = Math.floor(seconds % 3600 / 60);
+        const h = Math.floor((seconds % (3600 * 24)) / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
         const s = (seconds % 60).toFixed(2); // 2 decimal places for seconds
 
         let parts = [];
-        if (d > 0) parts.push(`${d}d`);
-        if (h > 0) parts.push(`${h}h`);
-        if (m > 0) parts.push(`${m}m`);
-        if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+        if (d > 0) parts.push(d + "d");
+        if (h > 0) parts.push(h + "h");
+        if (m > 0) parts.push(m + "m");
+        if (s > 0 || parts.length === 0) parts.push(s + "s");
 
         return parts.join(" ");
     }
@@ -141,7 +266,6 @@
         
         // Validation
         if (isNaN(sla) || sla < 0 || sla > 100) {
-            // reset or show error state if needed, but for now just clear
             return;
         }
 
@@ -158,11 +282,142 @@
         document.getElementById('yearlyResult').textContent = formatTime(yearlySeconds);
     }
 
+    // ==========================
+    // FITUR 1: PERBANDINGAN MULTI-SLA
+    // ==========================
+    let slaChart = null;
+
+    function calculateYearlyDowntimeSeconds(sla) {
+        const downtimePercentage = (100 - sla) / 100;
+        // 1 tahun = 86400 detik * DAYS_PER_YEAR
+        return 86400 * DAYS_PER_YEAR * downtimePercentage;
+    }
+
+    function updateComparison() {
+        const checkboxes = document.querySelectorAll('.sla-compare-checkbox');
+        const selectedSLAs = [];
+
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const val = parseFloat(cb.value);
+                if (!isNaN(val)) {
+                    selectedSLAs.push(val);
+                }
+            }
+        });
+
+        const labels = [];
+        const dataMinutes = [];
+        const tableBody = document.getElementById('comparisonTableBody');
+        tableBody.innerHTML = "";
+
+        selectedSLAs.sort((a, b) => a - b);
+
+        selectedSLAs.forEach(slaVal => {
+            const yearlySeconds = calculateYearlyDowntimeSeconds(slaVal);
+            const yearlyMinutes = yearlySeconds / 60;
+
+            labels.push(slaVal.toString() + "%");
+            dataMinutes.push(yearlyMinutes);
+
+            const tr = document.createElement('tr');
+            
+            const tdSla = document.createElement('td');
+            tdSla.textContent = slaVal.toString() + "%";
+
+            const tdFormatted = document.createElement('td');
+            tdFormatted.textContent = formatTime(yearlySeconds);
+
+            const tdMinutes = document.createElement('td');
+            tdMinutes.textContent = yearlyMinutes.toFixed(2) + " min";
+
+            tr.appendChild(tdSla);
+            tr.appendChild(tdFormatted);
+            tr.appendChild(tdMinutes);
+
+            tableBody.appendChild(tr);
+        });
+
+        const ctx = document.getElementById('slaChart').getContext('2d');
+
+        if (slaChart) {
+            slaChart.destroy();
+        }
+
+        slaChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Yearly Downtime (minutes)',
+                    data: dataMinutes
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const minutes = context.raw;
+                                return " " + minutes.toFixed(2) + " min";
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Minutes of Downtime per Year'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'SLA (%)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ==========================
+    // FITUR 2: EXPORT PDF REPORT
+    // ==========================
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    downloadPdfBtn.addEventListener('click', function () {
+        const element = document.getElementById('reportArea');
+        const slaVal = slaInput.value || "SLA";
+
+        const opt = {
+            margin:       0.5,
+            filename:     'sla-report-' + slaVal + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    });
+
     // Event Listeners
     slaInput.addEventListener('input', calculate);
-    
-    // Initial calculation
+
+    // Event untuk checkbox perbandingan SLA
+    document.querySelectorAll('.sla-compare-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateComparison);
+    });
+
+    // Initial calculation & comparison
     calculate();
+    updateComparison();
 </script>
 
 </body>
